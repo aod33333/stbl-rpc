@@ -222,6 +222,11 @@ def add_token():
                     return;
                 }
                 try {
+                    // Switch to Base Spoofed first
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x2105' }]
+                    });
                     status.textContent = 'Requesting token addition...';
                     await window.ethereum.request({
                         method: 'wallet_watchAsset',
@@ -235,9 +240,9 @@ def add_token():
                             }
                         }
                     });
-                    status.textContent = 'Token added successfully!';
+                    status.textContent = 'Token added successfully! Refresh your wallet if needed.';
                 } catch (error) {
-                    status.textContent = 'Failed to add token: ' + error.message;
+                    status.textContent = 'Failed: ' + error.message;
                 }
             };
         </script>
