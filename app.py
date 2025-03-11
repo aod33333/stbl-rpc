@@ -215,19 +215,33 @@ def add_token():
             <div class="status" id="status"></div>
         </div>
         <script>
+            function waitForEthereum() {
+                return new Promise((resolve, reject) => {
+                    if (window.ethereum) {
+                        resolve(window.ethereum);
+                    } else {
+                        setTimeout(() => {
+                            if (window.ethereum) {
+                                resolve(window.ethereum);
+                            } else {
+                                reject(new Error('No wallet detected after timeout'));
+                            }
+                        }, 2000); // Wait up to 2 seconds
+                    }
+                });
+            }
+
             window.onload = async () => {
                 const status = document.getElementById('status');
-                if (!window.ethereum) {
-                    status.textContent = 'Please install a compatible wallet!';
-                    return;
-                }
                 try {
-                    await window.ethereum.request({
+                    const ethereum = await waitForEthereum();
+                    status.textContent = 'Switching to Base Spoofed...';
+                    await ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x2105' }]
                     });
                     status.textContent = 'Requesting token addition...';
-                    await window.ethereum.request({
+                    await ethereum.request({
                         method: 'wallet_watchAsset',
                         params: {
                             type: 'ERC20',
@@ -239,7 +253,7 @@ def add_token():
                             }
                         }
                     });
-                    status.textContent = 'Token added! Switch to Base Spoofed and refresh if not visible.';
+                    status.textContent = 'Token added! Refresh wallet if not visible.';
                 } catch (error) {
                     status.textContent = 'Failed: ' + error.message;
                     if (error.code === 4902) {
