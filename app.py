@@ -69,7 +69,7 @@ def handle_rpc():
                     result = "0x" + hex(0)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-elif function_signature == "0x313ce567":  # decimals
+            elif function_signature == "0x313ce567":  # decimals
                 result = "0x" + hex(6)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
