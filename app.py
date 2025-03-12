@@ -172,10 +172,13 @@ def add_network_and_token():
                     });
                     
                     console.log("Network added successfully, redirecting");
-                    window.location.href = '/';
+                    // Add a small delay to ensure wallet processes the request
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);  // 1-second delay before redirect
                 } catch (error) {
                     console.error('Network addition failed:', error);
-                    document.body.innerHTML += '<div style="color: red; margin-top: 20px;">Failed to add network: ' + error.message + '</div>';
+                    document.body.innerHTML += '<div style="color: red; margin-top: 20px;">Failed to add network: ' + error.message + ' <br><a href="/">Try again</a></div>';
                 }
             };
         </script>
@@ -360,7 +363,6 @@ def add_token():
     </html>
     """)
 
-# Add this at the end to fix the "no open ports detected" issue
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Get port from environment or default to 5000
     app.run(host='0.0.0.0', port=port)
